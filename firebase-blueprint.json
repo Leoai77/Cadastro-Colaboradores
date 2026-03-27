@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "Employee": {
+      "title": "Employee",
+      "description": "Employee registration data",
+      "type": "object",
+      "properties": {
+        "nome": { "type": "string" },
+        "cpf": { "type": "string" },
+        "rg": { "type": "string" },
+        "uf_rg": { "type": "string" },
+        "data_emissao_rg": { "type": "string" },
+        "data_nascimento": { "type": "string" },
+        "naturalidade": { "type": "string" },
+        "email": { "type": "string" },
+        "telefone": { "type": "string" },
+        "celular": { "type": "string" },
+        "nome_mae": { "type": "string" },
+        "nome_pai": { "type": "string" },
+        "estado_civil": { "type": "string" },
+        "grau_instrucao": { "type": "string" },
+        "logradouro": { "type": "string" },
+        "bairro": { "type": "string" },
+        "cidade": { "type": "string" },
+        "uf": { "type": "string" },
+        "cep": { "type": "string" },
+        "pis_pasep": { "type": "string" },
+        "ctps_numero": { "type": "string" },
+        "ctps_serie": { "type": "string" },
+        "titulo_eleitor": { "type": "string" },
+        "zona": { "type": "string" },
+        "secao": { "type": "string" },
+        "habilitacao": { "type": "string" },
+        "categoria_cnh": { "type": "string" },
+        "reservista": { "type": "string" },
+        "banco": { "type": "string" },
+        "agencia": { "type": "string" },
+        "conta": { "type": "string" },
+        "data_admissao": { "type": "string" },
+        "salario": { "type": "string" },
+        "funcao": { "type": "string" },
+        "setor": { "type": "string" },
+        "horario_trabalho": { "type": "string" },
+        "trabalha_sabado": { "type": "string" },
+        "vale_transporte": { "type": "string" },
+        "vale_alimentacao": { "type": "string" },
+        "dependentes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "nome": { "type": "string" },
+              "data_nascimento": { "type": "string" },
+              "grau_parentesco": { "type": "string" },
+              "cpf": { "type": "string" }
+            }
+          }
+        },
+        "razao_social": { "type": "string" },
+        "cnpj": { "type": "string" },
+        "uid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["nome", "cpf", "data_nascimento", "data_admissao", "uid"]
+    }
+  },
+  "firestore": {
+    "/employees/{employeeId}": {
+      "schema": "Employee",
+      "description": "Collection of employee registrations"
+    }
+  }
+}

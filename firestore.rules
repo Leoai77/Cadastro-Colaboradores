@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "leocontanova7@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    // Domain Validators
+    function isValidEmployee(data) {
+      return data.nome is string && data.nome.size() > 0 && data.nome.size() < 200 &&
+             data.cpf is string && data.cpf.size() > 0 && data.cpf.size() < 20 &&
+             data.data_nascimento is string &&
+             data.data_admissao is string &&
+             data.uid is string && data.uid == request.auth.uid;
+    }
+
+    match /employees/{employeeId} {
+      allow read: if isAuthenticated() && (isDocOwner() || isAdmin());
+      allow create: if isAuthenticated() && isValidEmployee(request.resource.data);
+      allow update: if isAuthenticated() && (isDocOwner() || isAdmin()) && isValidEmployee(request.resource.data);
+      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin());
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow write: if isAuthenticated() && isOwner(userId);
+    }
+  }
+}
