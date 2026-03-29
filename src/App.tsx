@@ -80,6 +80,7 @@ export default function App() {
     try {
       await deleteDoc(doc(db, 'employees', deleteId));
       setDeleteId(null);
+      setIsDeleteModalOpen(false);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, 'employees');
     }
