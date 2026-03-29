@@ -3,14 +3,39 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
+    <title>Registro Novo - Cadastro de Funcionários</title>
     <script>
       if (typeof global === 'undefined') {
         window.global = window;
       }
       if (typeof process === 'undefined') {
         window.process = { env: {} };
+      } else if (typeof process.env === 'undefined') {
+        process.env = {};
       }
+      if (typeof Buffer === 'undefined') {
+        window.Buffer = {
+          isBuffer: () => false,
+          from: () => ({}),
+          alloc: () => ({})
+        };
+      }
+      
+      // Simple error handler to help diagnose white screen
+      window.onerror = function(msg, url, line, col, error) {
+        console.error('Fatal Error:', msg, 'at', url, ':', line, ':', col);
+        // If the app is still white after 2 seconds, show a fallback message
+        setTimeout(() => {
+          const root = document.getElementById('root');
+          if (root && root.innerHTML === '') {
+            root.innerHTML = '<div style="padding: 20px; font-family: sans-serif; text-align: center;">' +
+              '<h2>Erro ao carregar o aplicativo</h2>' +
+              '<p>Ocorreu um erro fatal durante a inicialização. Por favor, verifique o console do navegador para mais detalhes.</p>' +
+              '<button onclick="location.reload()" style="padding: 10px 20px; background: #000; color: #fff; border: none; border-radius: 8px; cursor: pointer;">Recarregar</button>' +
+              '</div>';
+          }
+        }, 2000);
+      };
     </script>
   </head>
   <body>
