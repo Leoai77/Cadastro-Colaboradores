@@ -26,11 +26,17 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onDataExtracted }) => {
     try {
       const reader = new FileReader();
       reader.onload = async () => {
-        const base64 = (reader.result as string).split(',')[1];
-        const data = await parseEmployeePdf(base64);
-        onDataExtracted(data);
-        setSuccess(true);
-        setIsProcessing(false);
+        try {
+          const base64 = (reader.result as string).split(',')[1];
+          const data = await parseEmployeePdf(base64);
+          onDataExtracted(data);
+          setSuccess(true);
+        } catch (err: any) {
+          console.error(err);
+          setError(err.message || 'Erro ao processar o PDF com IA.');
+        } finally {
+          setIsProcessing(false);
+        }
       };
       reader.onerror = () => {
         setError('Erro ao ler o arquivo.');
@@ -39,7 +45,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onDataExtracted }) => {
       reader.readAsDataURL(file);
     } catch (err) {
       console.error(err);
-      setError('Erro ao processar o PDF com IA.');
+      setError('Erro ao iniciar o processamento do arquivo.');
       setIsProcessing(false);
     }
   };
