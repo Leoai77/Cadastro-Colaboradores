@@ -6,6 +6,7 @@ import { Employee } from './types';
 import { FileUpload } from './components/FileUpload';
 import { EmployeeForm } from './components/EmployeeForm';
 import { EmployeeList } from './components/EmployeeList';
+import { ConfirmModal } from './components/ConfirmModal';
 import { LogIn, LogOut, Users, Plus, List, Loader2, User as UserIcon } from 'lucide-react';
 
 export default function App() {
@@ -15,6 +16,8 @@ export default function App() {
   const [view, setView] = useState<'list' | 'form'>('list');
   const [editingEmployee, setEditingEmployee] = useState<Partial<Employee> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -68,9 +71,15 @@ export default function App() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este cadastro?')) return;
+    setDeleteId(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
     try {
-      await deleteDoc(doc(db, 'employees', id));
+      await deleteDoc(doc(db, 'employees', deleteId));
+      setDeleteId(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, 'employees');
     }
@@ -185,7 +194,21 @@ export default function App() {
         ) : (
           <div className="space-y-8">
             {!editingEmployee?.id && (
-              <FileUpload onDataExtracted={(data) => setEditingEmployee(prev => ({ ...prev, ...data }))} />
+              <FileUpload 
+                onDataExtracted={(data) => {
+                  setEditingEmployee(prev => {
+                    const merged = { ...(prev || {}) };
+                    Object.entries(data).forEach(([key, value]) => {
+                      // Only merge if the new value is not empty
+                      const isEmpty = value === "" || value === null || value === undefined || (Array.isArray(value) && value.length === 0);
+                      if (!isEmpty) {
+                        (merged as any)[key] = value;
+                      }
+                    });
+                    return merged;
+                  });
+                }} 
+              />
             )}
             <EmployeeForm
               initialData={editingEmployee || {}}
@@ -195,6 +218,16 @@ export default function App() {
           </div>
         )}
       </main>
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Excluir Funcionário"
+        message="Tem certeza que deseja excluir este cadastro? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        variant="danger"
+      />
     </div>
   );
 }

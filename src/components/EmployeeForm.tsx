@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { Employee } from '../types';
-import { Save, Download, Plus, Trash2, User, Building2, MapPin, FileText, Landmark, Briefcase, Users, Loader2 } from 'lucide-react';
+import { Save, Download, Plus, Trash2, User, Building2, MapPin, FileText, Landmark, Briefcase, Users, Loader2, AlertTriangle, X } from 'lucide-react';
 import { generateFilledPdf } from '../lib/pdf';
 
 interface EmployeeFormProps {
@@ -10,8 +10,10 @@ interface EmployeeFormProps {
   isSaving?: boolean;
 }
 
-export const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, onSave, isSaving }) => {
-  const { register, control, handleSubmit, reset, formState: { errors } } = useForm<Employee>({
+export const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, onSave, isSaving: isSavingProp }) => {
+  const [pdfError, setPdfError] = React.useState<string | null>(null);
+
+  const { register, control, handleSubmit, reset, setValue, formState: { errors } } = useForm<Employee>({
     defaultValues: {
       dependentes: [],
       ...initialData
@@ -23,11 +25,32 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, onSave,
     name: "dependentes"
   });
 
+  // Track the current ID to know when to reset the entire form
+  const [currentId, setCurrentId] = React.useState<string | undefined>(initialData?.id);
+
   useEffect(() => {
     if (initialData) {
-      reset(initialData);
+      if (initialData.id !== currentId) {
+        // If switching to a different employee, reset the whole form
+        reset(initialData);
+        setCurrentId(initialData.id);
+      } else {
+        // If it's the same employee (or both undefined), update fields incrementally
+        // This preserves manual edits in fields that are not present in initialData
+        Object.entries(initialData).forEach(([key, value]) => {
+          if (key === 'dependentes' && Array.isArray(value)) {
+            // Special handling for dependentes array if needed, 
+            // but for now we'll just reset it if it's provided and not empty
+            if (value.length > 0) {
+              setValue('dependentes', value);
+            }
+          } else if (value !== undefined && value !== null && value !== "") {
+            setValue(key as any, value);
+          }
+        });
+      }
     }
-  }, [initialData, reset]);
+  }, [initialData, reset, setValue, currentId]);
 
   const handleDownload = async (data: Employee) => {
     try {
@@ -39,9 +62,10 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, onSave,
       link.download = `cadastro_${data.nome.replace(/\s+/g, '_') || 'funcionario'}_${data.cpf || 'sem_cpf'}.pdf`;
       link.click();
       URL.revokeObjectURL(url);
+      setPdfError(null);
     } catch (err) {
       console.error("Erro ao gerar PDF:", err);
-      alert("Erro ao gerar o PDF. Verifique os dados e tente novamente.");
+      setPdfError("Erro ao gerar o PDF. Verifique os dados e tente novamente.");
     }
   };
 
@@ -188,23 +212,34 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, onSave,
         </div>
       </div>
 
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-white/50 z-50">
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="flex items-center gap-2 bg-primary text-white px-8 py-3 rounded-xl font-semibold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
-        >
-          {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-          Salvar Cadastro
-        </button>
-        <button
-          type="button"
-          onClick={handleSubmit(handleDownload)}
-          className="flex items-center gap-2 bg-white text-gray-700 border border-gray-200 px-8 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-all"
-        >
-          <Download className="w-5 h-5" />
-          Baixar PDF
-        </button>
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-50">
+        {pdfError && (
+          <div className="bg-red-50 text-red-600 px-4 py-2 rounded-xl border border-red-100 flex items-center gap-2 text-sm animate-in slide-in-from-bottom-2 duration-300">
+            <AlertTriangle className="w-4 h-4" />
+            {pdfError}
+            <button onClick={() => setPdfError(null)} className="ml-2 hover:text-red-800">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+        <div className="flex items-center gap-4 bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-white/50">
+          <button
+            type="submit"
+            disabled={isSavingProp}
+            className="flex items-center gap-2 bg-primary text-white px-8 py-3 rounded-xl font-semibold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+          >
+            {isSavingProp ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+            Salvar Cadastro
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit(handleDownload)}
+            className="flex items-center gap-2 bg-white text-gray-700 border border-gray-200 px-8 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-all"
+          >
+            <Download className="w-5 h-5" />
+            Baixar PDF
+          </button>
+        </div>
       </div>
     </form>
   );
